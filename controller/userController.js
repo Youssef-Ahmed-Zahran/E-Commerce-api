@@ -49,6 +49,11 @@ const getUserById = async (req, res) => {
  *   @access  private (only admin & User himself)
  */
 const updateUserById = async (req, res) => {
+  const { error } = validateUpdateUser(req.body);
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
+  }
+
   try {
     const user = await User.findById(req.params.id);
     if (user) {

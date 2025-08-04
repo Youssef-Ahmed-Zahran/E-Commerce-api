@@ -10,14 +10,17 @@ const {
   createOrder,
   updateOrderById,
   deleteOrderById,
+  getMonthlyIncome,
 } = require("../controller/orderController");
 
 // Http Methods / Verbs
 
 router
-  .report("/")
-  .post(verifyToken, createOrder)
-  .get(verifyTokenAndAdmin, getAllOrders);
+  .route("/")
+  .get(verifyTokenAndAdmin, getAllOrders)
+  .post(verifyTokenAndAuthorization, createOrder);
+
+router.get("/income", verifyTokenAndAdmin, getMonthlyIncome);
 
 router
   .route("/:id")

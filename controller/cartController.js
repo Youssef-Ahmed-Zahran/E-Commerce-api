@@ -10,7 +10,9 @@ const { Cart } = require("../models/Cart");
  */
 const getAllCart = async (req, res) => {
   try {
-    const carts = await User.find();
+    const carts = await User.find()
+      .populate("userId", ["_id", "username"])
+      .populate("products.productId", ["_id", "title"]);
     res.status(200).json(carts);
   } catch (error) {
     console.log(error);
@@ -26,7 +28,9 @@ const getAllCart = async (req, res) => {
  */
 const getCartById = async (req, res) => {
   try {
-    const cart = await Cart.findById(req.params.id);
+    const cart = await Cart.findById(req.params.id)
+      .populate("userId")
+      .populate("products.productId");
     if (cart) {
       return res.status(200).json(cart);
     } else {
@@ -42,7 +46,7 @@ const getCartById = async (req, res) => {
  *   @desc   Create New Cart
  *   @route  /api/carts
  *   @method  post
- *   @access  private (User himself)
+ *   @access  private (only admin & User himself)
  */
 const createCart = async (req, res) => {
   const newCart = new Cart(req.body);
@@ -73,7 +77,11 @@ const updateCartById = async (req, res) => {
         },
         { new: true }
       );
-      res.status(200).json(updatedCart);
+      res
+        .status(200)
+        .json(updatedCart)
+        .populate("userId", ["_id", "username"])
+        .populate("products.productId", ["_id", "title"]);
     } else {
       return res.status(404).json({ message: "Cart not found!" });
     }

@@ -16,11 +16,16 @@ const getAllProduct = async (req, res) => {
     let products;
 
     if (qNew) {
-      products = await Product.find().sort({ createdAt: -1 }).limit(5);
+      products = await Product.find()
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .populate("userId", ["_id", "username"]);
     } else if (qCategory) {
-      products = await Product.find({ categories: { $in: [qCategory] } });
+      products = await Product.find({
+        categories: { $in: [qCategory] },
+      }).populate("userId", ["_id", "username"]);
     } else {
-      products = await Product.find();
+      products = await Product.find().populate("userId", ["_id", "username"]);
     }
 
     res.status(200).json(products);
@@ -38,7 +43,7 @@ const getAllProduct = async (req, res) => {
  */
 const getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id).populate("userId");
     if (product) {
       return res.status(200).json(product);
     } else {
@@ -84,7 +89,7 @@ const updateProductById = async (req, res) => {
           $set: req.body,
         },
         { new: true }
-      );
+      ).populate("userId", ["_id", "username"]);
       res.status(200).json(updatedProduct);
     } else {
       return res.status(404).json({ message: "product not found!" });

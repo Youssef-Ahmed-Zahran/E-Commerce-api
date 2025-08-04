@@ -10,7 +10,9 @@ const { Order } = require("../models/Order");
  */
 const getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find();
+    const orders = await Order.find()
+      .populate("userId", ["_id", "username"])
+      .populate("products.productId", ["_id", "title"]);
     res.status(200).json(orders);
   } catch (error) {
     console.log(error);
@@ -26,7 +28,9 @@ const getAllOrders = async (req, res) => {
  */
 const getOrderById = async (req, res) => {
   try {
-    const order = await Order.find({ userId: req.params.id });
+    const order = await Order.findById(req.params.id)
+      .populate("userId")
+      .populate("products.productId");
     if (order) {
       return res.status(200).json(order);
     } else {
@@ -42,7 +46,7 @@ const getOrderById = async (req, res) => {
  *   @desc   Create New Order
  *   @route  /api/orders
  *   @method  post
- *   @access  private (User himself)
+ *   @access  private (only admin & User himself)
  */
 const createOrder = async (req, res) => {
   const newOrder = new Order(req.body);
@@ -72,7 +76,9 @@ const updateOrderById = async (req, res) => {
           $set: req.body,
         },
         { new: true }
-      );
+      )
+        .populate("userId", ["_id", "username"])
+        .populate("products.productId", ["_id", "title"]);
       res.status(200).json(updatedOrder);
     } else {
       return res.status(404).json({ message: "order not found!" });
@@ -104,7 +110,38 @@ const deleteOrderById = async (req, res) => {
   }
 };
 
-// GET MONTHLY INCOME
+/**
+ *   @desc   GET MONTHLY INCOME
+ *   @route  /api/orders/income
+ *   @method  Get
+ *   @access  private (only admin)
+ */
+const getMonthlyIncome = async (req, res) => {
+  const date = new Date();
+  const lastMonth = new Date(date.setMonth(date.getMonth() - 1));
+  const previousMonth = new Date(new Date().setMonth(lastMonth.getMonth() - 1));
+
+  try {
+    const income = await Order.aggregate([
+      { $match: { createdAt: { $gte: previousMonth } } },
+      {
+        $project: {
+          month: { $month: "$createdAt" },
+          sales: "$amount",
+        },
+      },
+      {
+        $group: {
+          _id: "$month",
+          total: { $sum: "$sales" },
+        },
+      },
+    ]);
+    res.status(200).json(income);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+};
 
 module.exports = {
   getAllOrders,
@@ -112,4 +149,5 @@ module.exports = {
   createOrder,
   updateOrderById,
   deleteOrderById,
+  getMonthlyIncome,
 };

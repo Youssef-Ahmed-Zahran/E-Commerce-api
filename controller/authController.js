@@ -1,4 +1,9 @@
-const { User } = require("../models/User");
+const {
+  User,
+  validateRegisterUser,
+  validateLoginUser,
+  validateUpdateUser,
+} = require("../models/User");
 const CryptoJS = require("crypto-js");
 
 /**
@@ -8,6 +13,11 @@ const CryptoJS = require("crypto-js");
  *   @access  public
  */
 module.exports.register = async (req, res) => {
+  const { error } = validateRegisterUser(req.body);
+  if (error) {
+    res.status(400).json({ message: error.details[0].message });
+  }
+
   try {
     const user = await User.findOne({ email: req.body.email });
     if (user) {
@@ -43,6 +53,11 @@ module.exports.register = async (req, res) => {
  *   @access  public
  */
 module.exports.login = async (req, res) => {
+  const { error } = validateLoginUser(req.body);
+  if (error) {
+    res.status(400).json({ message: error.details[0].message });
+  }
+
   try {
     const user = await User.findOne({ email: req.body.email });
     if (!user) {
